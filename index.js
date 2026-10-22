@@ -33,7 +33,8 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: "GEMINI_API_KEY Missing in Environment Variables" });
     }
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    // Gemini API Request using gemini-1.5-flash
+    let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -43,8 +44,22 @@ app.post('/api/chat', async (req, res) => {
       })
     });
 
-    const data = await response.json();
-    
+    let data = await response.json();
+
+    // If model fails, fallback to gemini-1.5-pro
+    if (data.error) {
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `You are Rani (रानी), an intelligent female AI agent. Reply in polite Hindi. User Request: ${prompt}` }]
+          }]
+        })
+      });
+      data = await response.json();
+    }
+
     if (data.error) {
       return res.json({ reply: `API Error: ${data.error.message}` });
     }
