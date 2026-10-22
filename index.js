@@ -7,9 +7,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
-// Rani AI Base Endpoint
-app.get('/', (req, res) => {
+// Rani AI Base Status Endpoint
+app.get('/api/status', (req, res) => {
   res.json({
     agent: "Rani AI (रानी)",
     status: "Active 24/7",
@@ -50,4 +51,4 @@ app.post('/api/chat', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Rani AI Server running on port ${PORT}`);
 });
-    
+                        
