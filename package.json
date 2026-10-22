@@ -4,19 +4,14 @@
   "description": "Rani AI Agent with Mechanical Engineering, Self-Modification, and Long-Term Memory",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "typecheck": "tsc"
+    "start": "node index.js"
   },
   "private": true,
   "dependencies": {
-    "@replit/connectors-sdk": "^0.4.3",
+    "@google/generative-ai": "^0.21.0",
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5"
-  },
-  "devDependencies": {
-    "prettier": "^3.9.6",
-    "typescript": "~5.9.3"
   }
 }
+
