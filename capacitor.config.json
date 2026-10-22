@@ -1,0 +1,10 @@
+{
+  "appId": "com.yerani.ai",
+  "appName": "Rani AI",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://ye-rani.onrender.com",
+    "cleartext": true
+  }
+}
