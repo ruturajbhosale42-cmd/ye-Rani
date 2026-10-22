@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
@@ -33,45 +34,21 @@ app.post('/api/chat', async (req, res) => {
       return res.status(500).json({ error: "GEMINI_API_KEY Missing in Environment Variables" });
     }
 
-    // Gemini API Request using gemini-1.5-flash
-    let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [{ text: `You are Rani (रानी), an intelligent female AI agent. Reply in polite Hindi. User Request: ${prompt}` }]
-        }]
-      })
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    let data = await response.json();
-
-    // If model fails, fallback to gemini-1.5-pro
-    if (data.error) {
-      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `You are Rani (रानी), an intelligent female AI agent. Reply in polite Hindi. User Request: ${prompt}` }]
-          }]
-        })
-      });
-      data = await response.json();
-    }
-
-    if (data.error) {
-      return res.json({ reply: `API Error: ${data.error.message}` });
-    }
-
-    const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Mafi chahti hu, uttar process nahi ho paya.";
+    const systemInstruction = "You are Rani (रानी), an intelligent female AI agent. Respond naturally and politely in Hindi speech format.";
+    const result = await model.generateContent(`${systemInstruction}\nUser Request: ${prompt}`);
+    const response = await result.response;
+    const replyText = response.text() || "माफ़ी चाहती हूँ, उत्तर प्रोसेस नहीं हो पाया।";
     
     res.json({ reply: replyText });
   } catch (err) {
-    res.status(500).json({ error: "Server Error: " + err.message });
+    res.status(500).json({ error: "API Error: " + err.message });
   }
 });
 
 app.listen(PORT, () => {
   console.log(`Rani AI Server running on port ${PORT}`);
 });
+  
