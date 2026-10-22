@@ -3,94 +3,162 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rani AI (रानी) - Control Dashboard</title>
+  <title>Rani AI (रानी) - Voice Mode</title>
   <style>
     body {
       background-color: #0f172a;
       color: #f8fafc;
       font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       margin: 0;
-      padding: 20px;
     }
     .card {
       background-color: #1e293b;
-      border-radius: 12px;
-      padding: 20px;
-      max-width: 500px;
-      margin: 0 auto;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
     }
-    h1 { color: #38bdf8; text-align: center; font-size: 24px; }
-    .status { text-align: center; color: #4ade80; font-size: 14px; margin-bottom: 20px; }
-    textarea {
-      width: 100%;
-      height: 100px;
-      background: #0f172a;
-      border: 1px solid #334155;
-      color: #fff;
-      border-radius: 8px;
-      padding: 10px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-    button {
-      width: 100%;
-      background: #0284c7;
-      color: white;
+    h1 { color: #38bdf8; margin-bottom: 5px; }
+    .status { color: #4ade80; font-size: 14px; margin-bottom: 30px; }
+    
+    .mic-btn {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
       border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 10px;
+      color: white;
+      font-size: 40px;
       cursor: pointer;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      transition: all 0.3s ease;
+      margin: 20px auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    #response {
+    .mic-btn.listening {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    #speech-status {
+      font-size: 16px;
+      color: #94a3b8;
+      margin-top: 15px;
+      min-height: 24px;
+    }
+    #response-text {
       margin-top: 20px;
       background: #0f172a;
-      padding: 12px;
-      border-radius: 8px;
-      min-height: 80px;
-      white-space: pre-wrap;
-      font-size: 14px;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 15px;
+      color: #e2e8f0;
+      min-height: 50px;
       border: 1px solid #334155;
     }
   </style>
 </head>
 <body>
+
   <div class="card">
     <h1>👑 रानी (Rani AI)</h1>
-    <div class="status">● System Active 24/7 (Render Cloud)</div>
-    
-    <label for="prompt">Aadesh Yahan Likhein:</label>
-    <textarea id="prompt" placeholder="Ae Rani, aaj ka task batao..."></textarea>
-    <button onclick="sendTask()">Task Bhejo</button>
+    <div class="status">● Voice Mode Active (24/7)</div>
 
-    <h3>Response:</h3>
-    <div id="response">Aapke aadesh ka intezar hai...</div>
+    <button id="micBtn" class="mic-btn" onclick="toggleListening()">🎙️</button>
+    <div id="speech-status">बोलने के लिए माइक दबाएं...</div>
+
+    <div id="response-text">रानी आपसे बात करने के लिए तैयार है...</div>
   </div>
 
   <script>
-    async function sendTask() {
-      const promptText = document.getElementById('prompt').value;
-      const responseDiv = document.getElementById('response');
-      if (!promptText) return alert("Kripya koi task likhein!");
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let isListening = false;
 
-      responseDiv.innerText = "Rani AI soch rahi hai...";
+    if (SpeechRecognition) {
+      recognition = new SpeechRecognition();
+      recognition.lang = 'hi-IN'; // हिंदी भाषा
+      recognition.continuous = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        document.getElementById('micBtn').classList.add('listening');
+        document.getElementById('speech-status').innerText = "सुन रही हूँ... बोलिए!";
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        document.getElementById('micBtn').classList.remove('listening');
+        document.getElementById('speech-status').innerText = "प्रॉसेस हो रहा है...";
+      };
+
+      recognition.onresult = async (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('speech-status').innerText = `आपने कहा: "${transcript}"`;
+        sendToRani(transcript);
+      };
+    } else {
+      alert("आपकी ब्राउज़र वॉइस रिकॉग्निशन सपोर्ट नहीं करती। Chrome ब्राउज़र यूज़ करें।");
+    }
+
+    function toggleListening() {
+      if (!recognition) return;
+      if (isListening) {
+        recognition.stop();
+      } else {
+        window.speechSynthesis.cancel(); // पुरानी आवाज़ रोकें
+        recognition.start();
+      }
+    }
+
+    async function sendToRani(userPrompt) {
+      const responseDiv = document.getElementById('response-text');
+      responseDiv.innerText = "रानी सोच रही है...";
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: promptText })
+          body: JSON.stringify({ prompt: userPrompt })
         });
+        
         const data = await res.json();
-        responseDiv.innerText = data.reply || data.error || "Koi jawab nahi mila.";
+        const reply = data.reply || "माफ़ कीजिए, उत्तर नहीं मिल पाया।";
+        
+        responseDiv.innerText = reply;
+        speakText(reply); // रानी बोलकर जवाब देगी
       } catch (err) {
         responseDiv.innerText = "Error: " + err.message;
+        document.getElementById('speech-status').innerText = "फिर से कोशिश करें";
       }
+    }
+
+    function speakText(text) {
+      document.getElementById('speech-status').innerText = "रानी बोल रही है...";
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'hi-IN'; // हिंदी फीमेल वॉइस
+      utterance.pitch = 1.1; // महिला जैसी आवाज़ के लिए
+      utterance.rate = 0.95;
+
+      utterance.onend = () => {
+        document.getElementById('speech-status').innerText = "बोलने के लिए माइक दबाएं...";
+      };
+
+      window.speechSynthesis.speak(utterance);
     }
   </script>
 </body>
-  </html>
-  
+</html>
